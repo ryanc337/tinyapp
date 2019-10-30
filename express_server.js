@@ -26,6 +26,18 @@ function generateRandomString() {
   return randomString;
 };
 
+function emailLookUp(res, email, password, users) {
+  if (email === "" || password === "") {
+    return res.status(400).send("Input a email and password ya goof!");
+  } 
+  let usersArray = Object.values(users);
+    for (let i = 0; i < usersArray.length; i++) {
+      if (usersArray[i]["email"] === email) {
+        return res.status(400).send("Input a email and password ya goof!");
+      }
+    }
+};
+
 const users = {
   "userRandomID": {
     id: "userRandomID", 
@@ -124,10 +136,11 @@ app.post("/register", (req, res) => {
   let userEmail = req.body.email;
   let userPassword = req.body.password;
   let randomUserID = generateRandomString();
+  emailLookUp(res, userEmail, userPassword, users);
   users[randomUserID] = { id: randomUserID, email: userEmail, password: userPassword };
-
+  res.cookie("randomUserID", randomUserID);
+  res.redirect("/urls");
 });
-
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
