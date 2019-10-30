@@ -2,8 +2,10 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
 
 app.use(bodyParser.urlencoded({extended: true}));
+app.use(cookieParser());
 
 app.set("view engine", "ejs" );
 
@@ -31,18 +33,20 @@ const urlDatabase = {
 };
 
 app.get("/urls", (req, res) => {
-  let templateVars = { urls: urlDatabase };
+  console.log(req.headers);
+  let templateVars = { urls: urlDatabase, username: req.cookies["username"] };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  let templateVars = { username: req.cookies["username"] }
+  res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
   let shortURL = req.params.shortURL;
   let longURL = urlDatabase[shortURL];
-  let templateVars = { shortURL: shortURL, longURL: longURL };
+  let templateVars = { shortURL: shortURL, longURL: longURL, username: req.cookies["username"]};
   res.render("urls_show", templateVars);
 });
 
@@ -77,7 +81,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
   let shortURL = req.params.shortURL;
   let longURL = urlDatabase[shortURL];
-  let templateVars = { shortURL: shortURL, longURL: longURL };
+  let templateVars = { shortURL: shortURL, longURL: longURL, username: req.cookies["username"] };
   res.render("urls_show", templateVars);
 });
 
@@ -86,7 +90,20 @@ app.post("/urls/:shortURL", (req, res) => {
   let shortURL = req.params.shortURL;
   urlDatabase[shortURL] = longURL;
   res.redirect("/urls");
+});
+
+app.post("/login", (req, res) => {
+  res.cookie("username", req.body.username);
+  res.redirect("/urls");
+  let templateVars = { username: req.cookies["username"] }
+  res.render("urls_index", templateVars);
+});
+
+app.post("/logout", (req, res) => {
+  (res.clearCookie('username', req.body.username));
+  res.redirect("urls");
 })
+
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
