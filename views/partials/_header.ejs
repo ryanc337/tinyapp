@@ -11,17 +11,19 @@
       </div>
     </div>
     <div>
-        <% if (username) { %>
-          <h2>Logged in as <span><%= username %></span>!
+        <% if (user) { %>
+          <h2>Logged in as <span><%= user %></span>!
             <form method="POST" action="/logout"> 
             <button type="submit" class="btn btn-dark">Logout</button>
           </form>
         </h2>
         <% } else { %>
-          <h2><form method="POST" action="/login"> 
-            <input type="text" name="username" placeholder="Username" class="form-control-lg">
-            <button type="submit" class="btn btn-dark">Login</button>
-          </form></h2>
+          <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+              <div class="navbar-nav">
+                <a class="nav-item nav-link" href="/login">Log in</a>
+                <a class="nav-item nav-link" href="/register">Register</a>
+              </div>
+            </div>
        <% } %>
     </div>
   </nav>
