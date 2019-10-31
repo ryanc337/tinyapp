@@ -10,8 +10,16 @@ app.use(cookieParser());
 app.set("view engine", "ejs" );
 
 function urlsForUser(id) {
+  let userObj = {};
+  Object.assign(userObj, urlDatabase);
 
-};
+  for (const i in userObj) {
+    if (urlDatabase[i].user !== id) { 
+      delete urlDatabase[i];
+    }
+  }
+  return userObj;
+}
 
 function generateRandomString() {
   let randomNum = 0;
@@ -82,7 +90,7 @@ const urlDatabase = {
 }; 
 
 app.get("/urls", (req, res) => {
-  let templateVars = { urls: urlDatabase, user: users[req.cookies["randomUserID"]] };
+  let templateVars = { urls: urlsForUser(req.cookies["randomUserID"]), user: users[req.cookies["randomUserID"]] };
   res.render("urls_index", templateVars);
 });
 
