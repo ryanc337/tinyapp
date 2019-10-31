@@ -26,17 +26,38 @@ function generateRandomString() {
   return randomString;
 };
 
-function emailLookUp(res, email, password, users) {
+function emailLookUp(email, password, users) {
   if (email === "" || password === "") {
-    return res.status(400).send("Input a email and password ya goof!");
+    return false
   } 
   let usersArray = Object.values(users);
     for (let i = 0; i < usersArray.length; i++) {
       if (usersArray[i]["email"] === email) {
-        return res.status(400).send("Input a email and password ya goof!");
+        return false;
       }
     }
+  return true;
 };
+
+function findID (email, users) {
+  let usersArray = Object.values(users);
+  for (let i = 0; i < usersArray.length; i++) {
+    if (usersArray[i]["email"] === email) {
+      let id = usersArray[i]["id"]
+      return id;
+    }
+  }
+}
+
+function passwordCheck(password) {
+  let usersArray = Object.values(users);
+    for (let i = 0; i < usersArray.length; i++) {
+      if (usersArray[i]["password"] === password) {
+        return true;
+      }
+    }
+  return false;
+}
 
 const users = {
   "userRandomID": {
@@ -57,19 +78,19 @@ const urlDatabase = {
 };
 
 app.get("/urls", (req, res) => {
-  let templateVars = { urls: urlDatabase, user: req.cookies["randomUserID"] };
+  let templateVars = { urls: urlDatabase, user: users[req.cookies["randomUserID"]] };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  let templateVars = { user: req.cookies["randomUserID"] }
+  let templateVars = { user: users[req.cookies["randomUserID"]] }
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
   let shortURL = req.params.shortURL;
   let longURL = urlDatabase[shortURL];
-  let templateVars = { shortURL: shortURL, longURL: longURL, user: req.cookies["randomUserID"]};
+  let templateVars = { shortURL: shortURL, longURL: longURL, user: users[req.cookies["randomUserID"]]};
   res.render("urls_show", templateVars);
 });
 
@@ -91,19 +112,19 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  let templateVars = { user: req.cookies["randomUserID"]};
+  let templateVars = { user: users[req.cookies["randomUserID"]]};
   res.render("register", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
   let shortURL = req.params.shortURL;
   let longURL = urlDatabase[shortURL];
-  let templateVars = { shortURL: shortURL, longURL: longURL, user: req.cookies["randomUserID"] };
+  let templateVars = { shortURL: shortURL, longURL: longURL, user: users[req.cookies["randomUserID"]] };
   res.render("urls_show", templateVars);
 });
 
 app.get("/login", (req, res) => {
-  let templateVars = { user: req.cookies["randomUserID"]};
+  let templateVars = { user: users[req.cookies["randomUserID"]]};
   res.render("login", templateVars);
 });
 
@@ -128,12 +149,17 @@ app.post("/urls/:shortURL", (req, res) => {
 });
 
 
-// app.post("/login", (req, res) => {
-//   res.cookie("username", req.body.username);
-//   res.redirect("/urls");
-//   let templateVars = { user: req.cookies["randomUserID"] }
-//   res.render("urls_index", templateVars);
-// });
+app.post("/login", (req, res) => {
+  let userEmail = req.body.email;
+  let userPassword = req.body.password;
+  if (emailLookUp(userEmail, userPassword, users) === false && passwordCheck(userPassword) === true) {
+    console.log('yes')
+      res.cookie("randomUserID", findID(userEmail, users));
+      res.redirect("/urls");
+  } else {
+    res.status(403).send("Incorrect Username or Password");
+  }
+});
 
 app.post("/logout", (req, res) => {
   (res.clearCookie('randomUserID', req.body["randomUserID"]));
@@ -144,10 +170,14 @@ app.post("/register", (req, res) => {
   let userEmail = req.body.email;
   let userPassword = req.body.password;
   let randomUserID = generateRandomString();
-  emailLookUp(res, userEmail, userPassword, users);
-  users[randomUserID] = { id: randomUserID, email: userEmail, password: userPassword };
-  res.cookie("randomUserID", randomUserID);
-  res.redirect("/urls")
+  if (emailLookUp(userEmail, userPassword, users)) {
+    users[randomUserID] = { id: randomUserID, email: userEmail, password: userPassword };
+    res.cookie("randomUserID", randomUserID);
+    res.redirect("/urls")
+  } else {
+    res.status(400).send("input a valid email and password");
+  }
+
 });
 
 app.listen(PORT, () => {
