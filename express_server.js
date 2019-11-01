@@ -25,8 +25,11 @@ app.use(cookieSession({
 
 app.get("/urls", (req, res) => {
   let templateVars = { urls: urlsForUser(req.session.user_id), user: users[req.session.user_id] };
-  console.log(req.session.user_id);
-  res.render("urls_index", templateVars);
+  if (req.session.user_id === undefined) {
+    res.render("newUserHomePage", templateVars);
+  } else {
+    res.render("urls_index", templateVars);
+  }
 });
 
 app.get("/urls/new", (req, res) => {
@@ -121,7 +124,9 @@ app.post("/login", (req, res) => {
     req.session.user_id = findID(userEmail, users)
     res.redirect("/urls");
   } else {
-    res.status(403).send("Incorrect Username or Password");
+    res.status(403).render("errorPage.ejs");
+    
+    
   }
 });
 
