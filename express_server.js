@@ -3,6 +3,7 @@ const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
 const cookieSession = require("cookie-session");
+const bcrypt = require("bcrypt");
 const { emailLookUp } = require("./helpers");
 const { generateRandomString } = require("./helpers");
 const { findID } = require("./helpers");
@@ -20,6 +21,7 @@ app.use(cookieSession({
   // Cookie Options
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }));
+
 
 app.get("/urls", (req, res) => {
   let templateVars = { urls: urlsForUser(req.session.user_id), user: users[req.session.user_id] };
@@ -99,6 +101,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   }
 });
 
+
 app.post("/urls/:shortURL", (req, res) => {
   if (req.session.user_id === urlDatabase[req.params.shortURL]["user"]) {
     let shortURL = req.params.shortURL;
@@ -109,6 +112,7 @@ app.post("/urls/:shortURL", (req, res) => {
   }
 
 });
+
 
 app.post("/login", (req, res) => {
   let userEmail = req.body.email;
