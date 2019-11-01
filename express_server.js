@@ -3,6 +3,7 @@ const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcrypt');
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
@@ -49,19 +50,6 @@ function findID (email, users) {
     }
   }
 }
-
-function passwordCheck(password) {
-  let usersArray = Object.values(users);
-    for (let i = 0; i < usersArray.length; i++) {
-      if (usersArray[i]["password"] === password) {
-        return true;
-      }
-    }
-  return false;
-};
-
-
-
 const users = {
   "userRandomID": {
     id: "userRandomID", 
@@ -88,6 +76,17 @@ function urlsForUser(id) {
     }
   }
   return obj;
+};
+
+function checkPasswords(password, email) {
+  let passwordDatabase = "";
+  for (const i in users) {
+    if (email === users[i]["email"]){
+      passwordDatabase += users[i]["password"];
+    }
+  }
+  console.log(password, passwordDatabase);
+  return bcrypt.compareSync(password, passwordDatabase);
 };
 // urlsForUser(req.cookies["randomUserID"]
 
@@ -180,14 +179,13 @@ app.post("/urls/:shortURL", (req, res) => {
 
 });
 
-
+// emailLookUp(userEmail, userPassword, users) === false && 
 app.post("/login", (req, res) => {
   let userEmail = req.body.email;
   let userPassword = req.body.password;
-  if (emailLookUp(userEmail, userPassword, users) === false && passwordCheck(userPassword) === true) {
-    console.log('yes')
-      res.cookie("randomUserID", findID(userEmail, users));
-      res.redirect("/urls");
+  if (checkPasswords(userPassword, userEmail)) {
+    res.cookie("randomUserID", findID(userEmail, users));
+    res.redirect("/urls");
   } else {
     res.status(403).send("Incorrect Username or Password");
   }
@@ -201,11 +199,13 @@ app.post("/logout", (req, res) => {
 app.post("/register", (req, res) => {
   let userEmail = req.body.email;
   let userPassword = req.body.password;
+  const handledPassword = bcrypt.hashSync(userPassword, 10);
   let randomUserID = generateRandomString();
   if (emailLookUp(userEmail, userPassword, users)) {
-    users[randomUserID] = { id: randomUserID, email: userEmail, password: userPassword };
+    users[randomUserID] = { id: randomUserID, email: userEmail, password: handledPassword };
     res.cookie("randomUserID", randomUserID);
     res.redirect("/urls")
+    console.log(handledPassword);
   } else {
     res.status(400).send("input a valid email and password");
   }
