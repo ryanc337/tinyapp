@@ -12,11 +12,11 @@
     </div>
     <div>
         <% if (user) { %>
-          <h2>Logged in as <span><%= user.email %></span>!
+          <h6>Logged in as <span><%= user.email %>!</span></div>
             <form method="POST" action="/logout"> 
-            <button type="submit" class="btn btn-dark">Logout</button>
+            <div class="float-left"><button type="submit" class="btn btn-dark" style="margin-left: 12px">Logout</button></div>
           </form>
-        </h2>
+        </h6>
         <% } else { %>
           <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
               <div class="navbar-nav">
@@ -28,3 +28,4 @@
     </div>
   </nav>
 </header>
+
