@@ -12,7 +12,7 @@ const { checkPasswords } = require("./helpers");
 const { urlDatabase } = require("./objectDatabase");
 const { users } = require("./objectDatabase");
 
-app.set("view engine", "ejs" );
+app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieSession({
   name: 'session',
@@ -22,7 +22,7 @@ app.use(cookieSession({
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }));
 
-
+// Get Requests
 app.get("/urls", (req, res) => {
   let templateVars = { urls: urlsForUser(req.session.user_id), user: users[req.session.user_id] };
   if (req.session.user_id === undefined) {
@@ -36,37 +36,38 @@ app.get("/urls/new", (req, res) => {
   if (req.session.user_id === undefined) {
     res.redirect("/login");
   } else {
-    let templateVars = { user: users[req.session.user_id] }
+    let templateVars = { user: users[req.session.user_id] };
     res.render("urls_new", templateVars);
   }
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  console.log("edit page");
   let shortURL = req.params.shortURL;
   let urlObject = urlDatabase[shortURL];
   let longURL = urlObject.longURL;
-  urlDatabase[shortURL] = { longURL: longURL, user: req.session.user_id }
+  urlDatabase[shortURL] = { longURL: longURL, user: req.session.user_id };
   let templateVars = { shortURL: shortURL, longURL: longURL, user: users[req.session.user_id] };
   res.render("urls_show", templateVars);
 });
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  if (req.session.user_id === undefined) {
+    res.redirect("/login");
+  } else {
+    res.redirect("/urls");
+  }
 });
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
-
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL]["longURL"];
-  console.log(longURL);
+  if (longURL === undefined) {
+    return res.statusCode(404).send("Link not Found");
+  }
   res.redirect(longURL);
 });
 
@@ -75,19 +76,10 @@ app.get("/register", (req, res) => {
   res.render("register", templateVars);
 });
 
-app.get("/urls/:shortURL", (req, res) => {
-  let shortURL = req.params.shortURL;
-  let urlObject = urlDatabase[shortURL];
-  let longURL = urlObject.longURL;
-  let templateVars = { shortURL: shortURL, longURL: longURL, user: users[req.session.user_id] };
-  res.render("urls_show", templateVars);
-});
-
 app.get("/login", (req, res) => {
   let templateVars = { user: users[req.session.user_id] };
   res.render("login", templateVars);
 });
-
 
 app.post("/urls", (req, res) => {
   let randomString = generateRandomString();
@@ -95,6 +87,7 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${randomString}`);
 });
 
+// Post Requests
 app.post("/urls/:shortURL/delete", (req, res) => {
   if (req.session.user_id === urlDatabase[req.params.shortURL]["user"]) {
     delete urlDatabase[req.params.shortURL];
@@ -104,7 +97,6 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   }
 });
 
-
 app.post("/urls/:shortURL", (req, res) => {
   if (req.session.user_id === urlDatabase[req.params.shortURL]["user"]) {
     let shortURL = req.params.shortURL;
@@ -113,20 +105,16 @@ app.post("/urls/:shortURL", (req, res) => {
   } else {
     res.send("log in to edit!");
   }
-
 });
-
 
 app.post("/login", (req, res) => {
   let userEmail = req.body.email;
   let userPassword = req.body.password;
   if (emailLookUp(userEmail, userPassword, users) === false && checkPasswords(userPassword, userEmail)) {
-    req.session.user_id = findID(userEmail, users)
+    req.session.user_id = findID(userEmail, users);
     res.redirect("/urls");
   } else {
     res.status(403).render("errorPage.ejs");
-    
-    
   }
 });
 
@@ -143,12 +131,12 @@ app.post("/register", (req, res) => {
   if (emailLookUp(userEmail, userPassword, users)) {
     users[randomUserID] = { id: randomUserID, email: userEmail, password: handledPassword };
     req.session.user_id = randomUserID;
-    res.redirect("/urls")
+    res.redirect("/urls");
   } else {
-    res.status(400).send("input a valid email and password");
+    res.status(403).render("errorPage.ejs");
   }
 });
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
-}); 
+});

@@ -1,5 +1,4 @@
 const { assert } = require('chai');
-
 const { findID } = require('../helpers.js');
 
 const testUsers = {
